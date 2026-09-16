@@ -4,5 +4,6 @@ terraform {
     storage_account_name = "staiagentwe01"
     container_name       = "tfstate"
     key                  = "demo.tfstate"
+    use_azuread_auth     = true
   }
 }
