@@ -24,6 +24,11 @@ variable "admin_password_secret_name" {
   default = "sql-admin-password"
 }
 
+variable "subnet_id" {
+  type    = string
+  default = null
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

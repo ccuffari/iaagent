@@ -5,14 +5,29 @@ module "resource_group" {
   tags     = local.tags
 }
 
-module "storage_account" {
-  source              = "../../modules/storage_account"
-  name                = "saaidevwe01"
+module "virtual_network" {
+  source              = "../../modules/virtual_network"
+  name                = "vnet-ai-dev-we-01"
   resource_group_name = module.resource_group.name
   location            = local.location
+  address_space       = ["10.0.0.0/16"]
+  subnet_name         = "subnet-ai-dev-we-01"
+  subnet_prefixes     = ["10.0.1.0/24"]
+  service_endpoints   = ["Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.Sql"]
+  tags                = local.tags
+}
+
+module "storage_account" {
+  source                   = "../../modules/storage_account"
+  name                     = "saaidevwe01"
+  resource_group_name      = module.resource_group.name
+  location                 = local.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  tags                = local.tags
+  network_default_action   = "Deny"
+  allowed_subnet_ids       = [module.virtual_network.subnet_id]
+  allowed_ip_addresses     = var.allowed_ip_addresses
+  tags                     = local.tags
 }
 
 module "data_factory" {
@@ -24,13 +39,16 @@ module "data_factory" {
 }
 
 module "key_vault" {
-  source              = "../../modules/key_vault"
-  name                = "kv-ai-agent-dev-we-01"
-  resource_group_name = module.resource_group.name
-  location            = local.location
-  tenant_id           = local.tenant_id
-  sku_name            = "standard"
-  tags                = local.tags
+  source                 = "../../modules/key_vault"
+  name                   = "kv-ai-agent-dev-we-01"
+  resource_group_name    = module.resource_group.name
+  location               = local.location
+  tenant_id              = local.tenant_id
+  sku_name               = "standard"
+  network_default_action = "Deny"
+  allowed_subnet_ids     = [module.virtual_network.subnet_id]
+  allowed_ip_addresses   = var.allowed_ip_addresses
+  tags                   = local.tags
 }
 
 module "log_analytics" {
@@ -49,6 +67,7 @@ module "sql_server" {
   key_vault_id               = module.key_vault.id
   admin_login_secret_name    = "sql-admin-login"
   admin_password_secret_name = "sql-admin-password"
+  subnet_id                  = module.virtual_network.subnet_id
   tags                       = local.tags
 }
 
