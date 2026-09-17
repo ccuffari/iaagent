@@ -7,6 +7,13 @@ resource "azurerm_mssql_server" "this" {
   administrator_login_password  = var.admin_password
   public_network_access_enabled = true
   tags                          = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      administrator_login,
+      administrator_login_password,
+    ]
+  }
 }
 
 # Blocca tutto il traffico pubblico (0.0.0.0-0.0.0.0 = deny all)
