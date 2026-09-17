@@ -1,18 +1,13 @@
-name: terraform dev
-"on":
+name: Terraform dev
+on:
   workflow_dispatch:
     inputs:
       command:
-        description: "Comando terraform (dev)"
+        description: "Comando Terraform (dev)"
         required: true
         default: plan
         type: choice
-        options:
-          - init
-          - validate
-          - plan
-          - apply
-          - destroy
+        options: [init, validate, plan, apply, destroy]
 permissions:
   contents: read
   id-token: write

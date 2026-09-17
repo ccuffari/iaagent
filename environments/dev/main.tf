@@ -1,6 +1,6 @@
-module "resource_group" {
-  source = "../../modules/resource_group"
-  name                       = "rgiadevwe01"
-  location                   = "westeurope"
-  tags                       = local.tags
+module "rg-ia-dev-we-01" {
+  source   = "../../modules/rg-ia-dev-we-01"
+  name     = "rg-ia-dev-we-01"
+  location = local.location
+  tags     = local.tags
 }
