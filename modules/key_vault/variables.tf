@@ -1,28 +1,25 @@
-# Input del modulo key_vault
-
 variable "name" {
-  description = "Nome del Key Vault"
-  type        = string
+  type = string
 }
 
 variable "resource_group_name" {
-  description = "Resource group di destinazione"
-  type        = string
+  type = string
 }
 
 variable "location" {
-  description = "Regione Azure"
-  type        = string
+  type = string
+}
+
+variable "tenant_id" {
+  type = string
 }
 
 variable "sku_name" {
-  description = "SKU del Key Vault"
-  type        = string
-  default     = "standard"
+  type    = string
+  default = "standard"
 }
 
 variable "tags" {
-  description = "Tag da applicare"
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
 }
