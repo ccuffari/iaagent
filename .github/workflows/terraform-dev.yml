@@ -30,4 +30,18 @@ jobs:
       - name: Terraform ${{ inputs.command }}
         run: |
           set -o pipefail
-          terraform ${{ inputs.command }} -input=false -no-color -compact-warnings ${{ (inputs.command == 'apply' || inputs.command == 'destroy') && '-auto-approve' || '' }} 2>&1 | tail -200
+          az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" --output none
+          SQL_LOGIN=$(az keyvault secret show --vault-name kv-ai-agent-dev-we-01 --name sql-admin-login --query value -o tsv)
+          SQL_PASSWORD=$(az keyvault secret show --vault-name kv-ai-agent-dev-we-01 --name sql-admin-password --query value -o tsv)
+          echo "::add-mask::$SQL_LOGIN"
+          echo "::add-mask::$SQL_PASSWORD"
+          terraform ${{ inputs.command }} -input=false -no-color -compact-warnings \
+            -var="sql_admin_login=$SQL_LOGIN" \
+            -var="sql_admin_password=$SQL_PASSWORD" \
+            ${{ (inputs.command == 'apply' || inputs.command == 'destroy') && '-auto-approve' || '' }} > /tmp/tf.log 2>&1
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "===== TERRAFORM ERROR ====="
+            grep -A 40 "Error:" /tmp/tf.log || tail -80 /tmp/tf.log
+          fi
+          exit $rc
