@@ -23,10 +23,11 @@ jobs:
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      TF_VAR_sql_admin_login: ${{ secrets.TF_VAR_sql_admin_login }}
-      TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_sql_admin_password }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - run: terraform init -input=false
-      - run: terraform ${{ inputs.command }} -input=false ${{ (inputs.command == 'apply' || inputs.command == 'destroy') && '-auto-approve' || '' }}
+      - name: Terraform ${{ inputs.command }}
+        run: |
+          set -o pipefail
+          terraform ${{ inputs.command }} -input=false -no-color -compact-warnings ${{ (inputs.command == 'apply' || inputs.command == 'destroy') && '-auto-approve' || '' }} 2>&1 | tail -200
