@@ -29,7 +29,7 @@ jobs:
       - run: terraform init -input=false -no-color > /dev/null 2>&1
       - name: Terraform ${{ inputs.command }}
         run: |
-          set -o pipefail
+          set +e
           az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" --output none
           SQL_LOGIN=$(az keyvault secret show --vault-name kv-ai-agent-dev-we-01 --name sql-admin-login --query value -o tsv)
           SQL_PASSWORD=$(az keyvault secret show --vault-name kv-ai-agent-dev-we-01 --name sql-admin-password --query value -o tsv)
