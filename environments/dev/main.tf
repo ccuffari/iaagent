@@ -1,19 +1,19 @@
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "this" {
-  name = local.resource_group_name
+  name = var.resource_group_name
 }
 
 import {
   to = module.storage_account.azurerm_storage_account.this
-  id = "/subscriptions/f4a32007-b8c2-4aee-9dc0-1421a27e36ad/resourceGroups/rg-ia-dev-we-01/providers/Microsoft.Storage/storageAccounts/<sa>"
+  id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${var.storage_account_name}"
 }
 
 module "storage_account" {
   source                   = "../../modules/storage_account"
-  name                     = local.storage_account_name
+  name                     = var.storage_account_name
   resource_group_name      = data.azurerm_resource_group.this.name
-  location                 = local.location
+  location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
   tags                     = local.tags
@@ -21,14 +21,14 @@ module "storage_account" {
 
 import {
   to = module.key_vault.azurerm_key_vault.this
-  id = "/subscriptions/f4a32007-b8c2-4aee-9dc0-1421a27e36ad/resourceGroups/rg-ia-dev-we-01/providers/Microsoft.KeyVault/vaults/link-kv-vnet"
+  id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.KeyVault/vaults/${var.key_vault_name}"
 }
 
 module "key_vault" {
   source              = "../../modules/key_vault"
-  name                = local.key_vault_name
+  name                = var.key_vault_name
   resource_group_name = data.azurerm_resource_group.this.name
-  location            = local.location
+  location            = var.location
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
   tags                = local.tags
@@ -36,29 +36,29 @@ module "key_vault" {
 
 import {
   to = module.data_factory.azurerm_data_factory.this
-  id = "/subscriptions/f4a32007-b8c2-4aee-9dc0-1421a27e36ad/resourceGroups/rg-ia-dev-we-01/providers/Microsoft.DataFactory/factories/<adf1>"
+  id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.DataFactory/factories/${var.data_factory_name}"
 }
 
 module "data_factory" {
   source              = "../../modules/data_factory"
-  name                = local.data_factory_name
+  name                = var.data_factory_name
   resource_group_name = data.azurerm_resource_group.this.name
-  location            = local.location
+  location            = var.location
   tags                = local.tags
 }
 
 module "sql_server" {
   source              = "../../modules/sql_server"
-  name                = local.sql_server_name
+  name                = var.sql_server_name
   resource_group_name = data.azurerm_resource_group.this.name
-  location            = local.location
+  location            = var.location
   key_vault_id        = module.key_vault.id
   tags                = local.tags
 }
 
 module "sql_database" {
   source    = "../../modules/sql_database"
-  name      = local.sql_database_name
+  name      = var.sql_database_name
   server_id = module.sql_server.id
   sku_name  = "GP_S_Gen5_1"
 }
