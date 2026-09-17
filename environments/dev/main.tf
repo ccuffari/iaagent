@@ -1,34 +1,36 @@
+data "azurerm_client_config" "current" {}
+
 module "resource_group" {
   source   = "../../modules/resource_group"
-  name     = var.resource_group_name
+  name     = "iacrgtestwe01"
   location = local.location
   tags     = local.tags
 }
 
-module "storage_account" {
-  source                   = "../../modules/storage_account"
-  name                     = var.storage_account_name
-  resource_group_name      = module.resource_group.name
+module "storage" {
+  source                   = "../../modules/storage"
+  name                     = "staiagentwe01"
+  resource_group_name             = module.resource_group.name
   location                 = local.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
   tags                     = local.tags
 }
 
-module "key_vault" {
-  source              = "../../modules/key_vault"
-  name                = var.key_vault_name
+module "keyvault" {
+  source       = "../../modules/keyvault"
+  name         = "link-kv-vnet"
   resource_group_name = module.resource_group.name
-  location            = local.location
-  tenant_id           = var.tenant_id
-  sku_name            = "standard"
-  tags                = local.tags
+  location     = local.location
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  sku_name     = "standard"
+  tags         = local.tags
 }
 
-module "data_factory" {
-  source              = "../../modules/data_factory"
-  name                = var.data_factory_name
+module "datafactory" {
+  source       = "../../modules/datafactory"
+  name         = "Terraform"
   resource_group_name = module.resource_group.name
-  location            = local.location
-  tags                = local.tags
+  location     = local.location
+  tags         = local.tags
 }
