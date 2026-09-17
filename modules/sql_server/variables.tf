@@ -10,18 +10,14 @@ variable "location" {
   type = string
 }
 
-variable "key_vault_id" {
-  type = string
+variable "admin_login" {
+  type      = string
+  sensitive = true
 }
 
-variable "admin_login_secret_name" {
-  type    = string
-  default = "sql-admin-login"
-}
-
-variable "admin_password_secret_name" {
-  type    = string
-  default = "sql-admin-password"
+variable "admin_password" {
+  type      = string
+  sensitive = true
 }
 
 variable "subnet_id" {

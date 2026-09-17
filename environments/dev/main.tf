@@ -60,15 +60,14 @@ module "log_analytics" {
 }
 
 module "sql_server" {
-  source                     = "../../modules/sql_server"
-  name                       = "sql-ai-dev-we-01"
-  resource_group_name        = module.resource_group.name
-  location                   = local.location
-  key_vault_id               = module.key_vault.id
-  admin_login_secret_name    = "sql-admin-login"
-  admin_password_secret_name = "sql-admin-password"
-  subnet_id                  = module.virtual_network.subnet_id
-  tags                       = local.tags
+  source              = "../../modules/sql_server"
+  name                = "sql-ai-dev-we-01"
+  resource_group_name = module.resource_group.name
+  location            = local.location
+  admin_login         = var.sql_admin_login
+  admin_password      = var.sql_admin_password
+  subnet_id           = module.virtual_network.subnet_id
+  tags                = local.tags
 }
 
 module "sql_database" {
