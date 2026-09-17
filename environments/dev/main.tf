@@ -25,7 +25,7 @@ module "data_factory" {
 
 module "key_vault" {
   source              = "../../modules/key_vault"
-  name                = "kv-ai-dev-we-01"
+  name                = "kv-ai-agent-dev-we-01"
   resource_group_name = module.resource_group.name
   location            = local.location
   tenant_id           = local.tenant_id
