@@ -40,3 +40,21 @@ module "log_analytics" {
   location            = local.location
   tags                = local.tags
 }
+
+module "sql_server" {
+  source                     = "../../modules/sql_server"
+  name                       = "sql-ai-dev-we-01"
+  resource_group_name        = module.resource_group.name
+  location                   = local.location
+  key_vault_id               = module.key_vault.id
+  admin_login_secret_name    = "sql-admin-login"
+  admin_password_secret_name = "sql-admin-password"
+  tags                       = local.tags
+}
+
+module "sql_database" {
+  source    = "../../modules/sql_database"
+  name      = "sql-db-ai-dev-we-01"
+  server_id = module.sql_server.id
+  sku_name  = "GP_S_Gen5_1"
+}
