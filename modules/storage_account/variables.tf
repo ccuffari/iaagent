@@ -1,26 +1,34 @@
+# Input del modulo storage_account
+
 variable "name" {
-  type = string
+  description = "Nome dello storage account (lowercase, senza dash)"
+  type        = string
 }
 
 variable "resource_group_name" {
-  type = string
+  description = "Resource group di destinazione"
+  type        = string
 }
 
 variable "location" {
-  type = string
+  description = "Regione Azure"
+  type        = string
 }
 
 variable "account_tier" {
-  type    = string
-  default = "Standard"
+  description = "Tier dello storage account"
+  type        = string
+  default     = "Standard"
 }
 
 variable "account_replication_type" {
-  type    = string
-  default = "LRS"
+  description = "Tipo di replica"
+  type        = string
+  default     = "LRS"
 }
 
 variable "tags" {
-  type    = map(string)
-  default = {}
+  description = "Tag da applicare"
+  type        = map(string)
+  default     = {}
 }

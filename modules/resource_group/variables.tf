@@ -1,12 +1,17 @@
+# Input del modulo resource_group
+
 variable "name" {
-  type = string
+  description = "Nome del resource group"
+  type        = string
 }
 
 variable "location" {
-  type = string
+  description = "Regione Azure (es. westeurope)"
+  type        = string
 }
 
 variable "tags" {
-  type    = map(string)
-  default = {}
+  description = "Tag da applicare alle risorse"
+  type        = map(string)
+  default     = {}
 }
