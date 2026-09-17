@@ -1,31 +1,48 @@
-# Ambiente: dev
-# Composizione dei moduli per l'ambiente di sviluppo.
-
-# Resource Group: rg-ia-dev-we-01
 module "resource_group" {
   source   = "../../modules/resource_group"
-  name     = "rg-ia-dev-we-01"
+  name     = local.resource_group_name
   location = local.location
   tags     = local.tags
 }
 
-# Storage Account: saiadevwe01
 module "storage_account" {
-  source                   = "../../modules/storage_account"
-  name                     = "saiadevwe01"
-  resource_group_name      = module.resource_group.name
-  location                 = local.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  tags                     = local.tags
+  source               = "../../modules/storage_account"
+  name                 = local.storage_account_name
+  resource_group_name  = module.resource_group.name
+  location             = local.location
+  tags                 = local.tags
 }
 
-# Key Vault: kviadevwe01
 module "key_vault" {
   source              = "../../modules/key_vault"
-  name                = "kviadevwe01"
+  name                = local.key_vault_name
   resource_group_name = module.resource_group.name
   location            = local.location
-  sku_name            = "standard"
   tags                = local.tags
+}
+
+module "data_factory" {
+  source              = "../../modules/data_factory"
+  name                = local.data_factory_name
+  resource_group_name = module.resource_group.name
+  location            = local.location
+  tags                = local.tags
+}
+
+module "sql_server" {
+  source                     = "../../modules/sql_server"
+  name                       = local.sql_server_name
+  resource_group_name        = module.resource_group.name
+  location                   = local.location
+  key_vault_id               = module.key_vault.id
+  admin_login_secret_name    = "sql-admin-login"
+  admin_password_secret_name = "sql-admin-password"
+  tags                       = local.tags
+}
+
+module "sql_database" {
+  source    = "../../modules/sql_database"
+  name      = local.sql_database_name
+  server_id = module.sql_server.id
+  sku_name  = "GP_S_Gen5_1"
 }
