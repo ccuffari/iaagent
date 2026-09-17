@@ -56,5 +56,5 @@ module "sql_database" {
   source    = "../../modules/sql_database"
   name      = "sql-db-ai-dev-we-01"
   server_id = module.sql_server.id
-  sku_name  = "GP_S_Gen5_1"
+  sku_name  = "S0"
 }
