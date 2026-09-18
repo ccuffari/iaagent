@@ -1,0 +1,23 @@
+2026-09-18T13:22:14.584Z [INFO]  Terraform version: 1.16.3
+2026-09-18T13:22:14.584Z [INFO]  Go runtime version: go1.26.8
+2026-09-18T13:22:14.584Z [INFO]  CLI args: []string{"/home/runner/work/_temp/724951d8-568e-4f1d-9d7b-22c96d453dbf/terraform-bin", "state", "list", "-no-color"}
+2026-09-18T13:22:14.586Z [INFO]  CLI command args: []string{"state", "list", "-no-color"}
+data.azurerm_client_config.current
+azurerm_monitor_diagnostic_setting.adf
+azurerm_monitor_diagnostic_setting.storage_account
+azurerm_monitor_diagnostic_setting.storage_blob
+module.budget.azurerm_consumption_budget_resource_group.this
+module.data_factory.azurerm_data_factory.this
+module.diag_sql_database.azurerm_monitor_diagnostic_setting.this
+module.diag_storage_blob.azurerm_monitor_diagnostic_setting.this
+module.key_vault.data.azurerm_client_config.current
+module.key_vault.azurerm_key_vault.this
+module.log_analytics.azurerm_log_analytics_workspace.this
+module.resource_group.azurerm_resource_group.this
+module.sql_database.azurerm_mssql_database.this
+module.sql_server.azurerm_mssql_firewall_rule.deny_all_public
+module.sql_server.azurerm_mssql_server.this
+module.sql_server.azurerm_mssql_virtual_network_rule.vnet["vnet"]
+module.storage_account.azurerm_storage_account.this
+module.virtual_network.azurerm_subnet.this
+module.virtual_network.azurerm_virtual_network.this
