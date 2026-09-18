@@ -77,3 +77,80 @@ module "sql_database" {
   server_id = module.sql_server.id
   sku_name  = "S0"
 }
+
+# --- Budget + alerting cost ---
+module "budget" {
+  source            = "../../modules/budget"
+  name              = "budget-ai-dev-we-01"
+  resource_group_id = module.resource_group.id
+  amount            = var.budget_amount
+  start_date        = var.budget_start_date
+  contact_emails    = var.budget_contact_emails
+  notifications = [
+    { threshold = 50, operator = "GreaterThan", threshold_type = "Actual" },
+    { threshold = 80, operator = "GreaterThan", threshold_type = "Actual" },
+    { threshold = 100, operator = "GreaterThan", threshold_type = "Actual" },
+  ]
+}
+
+# --- Diagnostic settings (modulo riutilizzabile) ---
+module "diag_storage_account" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-storage-account"
+  target_resource_id         = module.storage_account.id
+  log_analytics_workspace_id = module.log_analytics.id
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_storage_blob" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-storage-blob"
+  target_resource_id         = "${module.storage_account.id}/blobServices/default"
+  log_analytics_workspace_id = module.log_analytics.id
+  enabled_logs               = ["StorageRead", "StorageWrite", "StorageDelete"]
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_adf" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-adf"
+  target_resource_id         = module.data_factory.id
+  log_analytics_workspace_id = module.log_analytics.id
+  enabled_logs               = ["PipelineRuns", "ActivityRuns", "TriggerRuns"]
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_key_vault" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-keyvault"
+  target_resource_id         = module.key_vault.id
+  log_analytics_workspace_id = module.log_analytics.id
+  enabled_logs               = ["AuditEvent"]
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_sql_server" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-sqlserver"
+  target_resource_id         = module.sql_server.id
+  log_analytics_workspace_id = module.log_analytics.id
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_sql_database" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-sqldb"
+  target_resource_id         = module.sql_database.id
+  log_analytics_workspace_id = module.log_analytics.id
+  enabled_logs = [
+    "SQLInsights",
+    "Errors",
+    "Timeouts",
+    "Blocks",
+    "Deadlocks",
+    "QueryStoreRuntimeStatistics",
+    "QueryStoreWaitStatistics",
+    "DatabaseWaitStatistics",
+  ]
+  metrics = ["AllMetrics"]
+}

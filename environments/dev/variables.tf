@@ -21,3 +21,21 @@ variable "sql_admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "budget_amount" {
+  description = "Importo mensile del budget (EUR)."
+  type        = number
+  default     = 20
+}
+
+variable "budget_start_date" {
+  description = "Data di inizio del budget (RFC3339, primo del mese)."
+  type        = string
+  default     = "2026-10-01T00:00:00Z"
+}
+
+variable "budget_contact_emails" {
+  description = "Email di notifica del budget."
+  type        = list(string)
+  default     = ["cuffaricristianfelice@gmail.com"]
+}
