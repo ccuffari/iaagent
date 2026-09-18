@@ -9,7 +9,7 @@ on:
         type: choice
         options: [init, validate, plan, apply, destroy, state-list]
 permissions:
-  contents: read
+  contents: write
   id-token: write
 jobs:
   terraform:
@@ -34,49 +34,22 @@ jobs:
           echo "::group::terraform init"
           terraform init -input=false -no-color
           echo "::endgroup::"
-      - name: Terraform state list (sola lettura)
+      - name: Terraform state list (scrive su file)
         if: ${{ inputs.command == 'state-list' || inputs.command == 'plan' }}
         run: |
           echo "::group::terraform state list"
-          terraform state list -no-color 2>&1 || echo "(state list fallito)"
+          terraform state list -no-color > ../../state-list.txt 2>&1 || echo "(state list fallito)" > ../../state-list.txt
+          cat ../../state-list.txt
           echo "::endgroup::"
-      - name: Riconcilia state diagnostic settings (rm vecchi + import nuovi)
-        if: ${{ inputs.command == 'apply' }}
+      - name: Commit state-list.txt
+        if: ${{ inputs.command == 'state-list' || inputs.command == 'plan' }}
         run: |
-          set +e
-          RG="rg-ai-dev-we-01"
-          SUB="$ARM_SUBSCRIPTION_ID"
-          BASE="/subscriptions/$SUB/resourceGroups/$RG/providers"
-
-          OLD_ADDRS="
-            azurerm_monitor_diagnostic_setting.storage_blob
-            azurerm_monitor_diagnostic_setting.sql_database
-            azurerm_monitor_diagnostic_setting.storage_account
-            azurerm_monitor_diagnostic_setting.adf
-            azurerm_monitor_diagnostic_setting.key_vault
-            azurerm_monitor_diagnostic_setting.sql_server
-          "
-          for ADDR in $OLD_ADDRS; do
-            echo "::group::state rm $ADDR"
-            terraform state rm -lock=false "$ADDR" 2>&1 || echo "(non presente: $ADDR)"
-            echo "::endgroup::"
-          done
-
-          IMPORTS="
-            module.diag_adf.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.DataFactory/factories/adf-ai-dev-we-01|diag-adf
-            module.diag_sql_server.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01|diag-sqlserver
-            module.diag_key_vault.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.KeyVault/vaults/kv-ai-agent-dev-we-01|diag-keyvault
-            module.diag_storage_account.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Storage/storageAccounts/saaidevwe01|diag-storage-account
-            module.diag_storage_blob.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Storage/storageAccounts/saaidevwe01/blobServices/default|diag-storage-blob
-            module.diag_sql_database.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01/databases/sql-db-ai-dev-we-01|diag-sqldb
-          "
-          echo "$IMPORTS" | while IFS='|' read -r ADDR ID; do
-            [ -z "$ADDR" ] && continue
-            echo "::group::import $ADDR"
-            terraform import -input=false -no-color -lock=false "$ADDR" "$ID" 2>&1 || echo "(import saltato: gia' nello state o non presente)"
-            echo "::endgroup::"
-          done
-          exit 0
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state-list.txt
+          git commit -m "ci: aggiorna state-list.txt [skip ci]" || echo "(nessuna modifica)"
+          git push || echo "(push saltato)"
       - name: Terraform ${{ inputs.command }}
         if: ${{ inputs.command != 'state-list' }}
         run: |
