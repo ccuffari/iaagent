@@ -33,7 +33,12 @@ jobs:
       - name: Terraform ${{ inputs.command }}
         run: |
           set +e
-          terraform ${{ inputs.command }} -input=false -no-color -compact-warnings -auto-approve > /tmp/tf.log 2>&1
+          CMD="${{ inputs.command }}"
+          EXTRA=""
+          if [ "$CMD" = "apply" ] || [ "$CMD" = "destroy" ]; then
+            EXTRA="-auto-approve"
+          fi
+          terraform $CMD -input=false -no-color -compact-warnings $EXTRA > /tmp/tf.log 2>&1
           rc=$?
           if [ $rc -ne 0 ]; then
             echo "===== TERRAFORM ERROR ====="
