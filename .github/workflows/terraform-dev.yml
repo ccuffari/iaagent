@@ -1,1 +1,62 @@
-...
+name: Terraform dev
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Comando Terraform (dev)"
+        required: true
+        default: plan
+        type: choice
+        options: [init, validate, plan, apply, destroy]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: dev
+    defaults:
+      run:
+        working-directory: environments/dev
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      TF_VAR_sql_admin_login: ${{ secrets.SQL_ADMIN_LOGIN }}
+      TF_VAR_sql_admin_password: ${{ secrets.SQL_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Terraform init
+        run: terraform init -input=false -no-color
+      - name: Terraform ${{ inputs.command }}
+        run: |
+          set +e
+          if [ "${{ inputs.command }}" = "apply" ]; then
+            echo "===== STEP 1: apply -target=module.virtual_network ====="
+            terraform apply -input=false -no-color -compact-warnings -auto-approve -target=module.virtual_network > /tmp/tf1.log 2>&1
+            rc1=$?
+            if [ $rc1 -ne 0 ]; then
+              echo "===== TERRAFORM ERROR (step 1) ====="
+              grep -A 40 "Error:" /tmp/tf1.log || tail -80 /tmp/tf1.log
+              exit $rc1
+            fi
+            echo "===== STEP 2: apply (full) ====="
+            terraform apply -input=false -no-color -compact-warnings -auto-approve > /tmp/tf2.log 2>&1
+            rc2=$?
+            if [ $rc2 -ne 0 ]; then
+              echo "===== TERRAFORM ERROR (step 2) ====="
+              grep -A 40 "Error:" /tmp/tf2.log || tail -80 /tmp/tf2.log
+              exit $rc2
+            fi
+            exit 0
+          else
+            terraform ${{ inputs.command }} -input=false -no-color -compact-warnings > /tmp/tf.log 2>&1
+            rc=$?
+            if [ $rc -ne 0 ]; then
+              echo "===== TERRAFORM ERROR ====="
+              grep -A 40 "Error:" /tmp/tf.log || tail -80 /tmp/tf.log
+            fi
+            exit $rc
+          fi
