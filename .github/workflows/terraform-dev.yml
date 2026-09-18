@@ -38,6 +38,13 @@ jobs:
           if [ "$CMD" = "apply" ] || [ "$CMD" = "destroy" ]; then
             EXTRA="-auto-approve"
           fi
+          if [ "$CMD" = "apply" ]; then
+            echo "===== IMPORT (idempotente) della regola VNet SQL ====="
+            terraform import -input=false -no-color \
+              'module.sql_server.azurerm_mssql_virtual_network_rule.vnet["vnet"]' \
+              "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/rg-ai-dev-we-01/providers/Microsoft.Sql/servers/sql-ai-dev-we-01/virtualNetworkRules/AllowVNet" \
+              || echo "(import saltato: risorsa gia' nello state o non presente)"
+          fi
           terraform $CMD -input=false -no-color -compact-warnings $EXTRA > /tmp/tf.log 2>&1
           rc=$?
           if [ $rc -ne 0 ]; then
