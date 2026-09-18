@@ -1,4 +1,4 @@
-name: Terraform dev
+name: Terraform dev apply
 on:
   workflow_dispatch:
     inputs:
@@ -25,11 +25,15 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       TF_VAR_sql_admin_login: ${{ secrets.SQL_ADMIN_LOGIN }}
       TF_VAR_sql_admin_password: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      TF_LOG: INFO
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - name: Terraform init
-        run: terraform init -input=false -no-color
+        run: |
+          echo "::group::terraform init"
+          terraform init -input=false -no-color
+          echo "::endgroup::"
       - name: Terraform ${{ inputs.command }}
         run: |
           set +e
@@ -38,12 +42,14 @@ jobs:
           if [ "$CMD" = "apply" ] || [ "$CMD" = "destroy" ]; then
             EXTRA="-auto-approve"
           fi
-          # -lock=false: temporaneo, per bypassare un lock di state orfano
-          # lasciato da una run cancellata. Da rimuovere una volta sbloccato.
-          terraform $CMD -input=false -no-color -compact-warnings -lock=false $EXTRA > /tmp/tf.log 2>&1
-          rc=$?
+          echo "::group::terraform $CMD (lock=false)"
+          echo "Comando: terraform $CMD -input=false -no-color -compact-warnings -lock=false $EXTRA"
+          terraform $CMD -input=false -no-color -compact-warnings -lock=false $EXTRA 2>&1 | tee /tmp/tf.log
+          rc=${PIPESTATUS[0]}
+          echo "::endgroup::"
           if [ $rc -ne 0 ]; then
-            echo "===== TERRAFORM ERROR ====="
+            echo "::group::TERRAFORM ERROR"
             grep -A 40 "Error:" /tmp/tf.log || tail -80 /tmp/tf.log
+            echo "::endgroup::"
           fi
           exit $rc
