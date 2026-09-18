@@ -24,10 +24,14 @@ resource "azurerm_mssql_firewall_rule" "deny_all_public" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Consente l'accesso solo dalla subnet della VNet
+# Consente l'accesso solo dalla subnet della VNet.
+# Usa for_each (chiave nota) invece di count: il count dipenderebbe da
+# var.subnet_id, che e' "known after apply" e causerebbe l'errore
+# "Invalid count argument".
 resource "azurerm_mssql_virtual_network_rule" "vnet" {
-  count     = var.subnet_id == null ? 0 : 1
+  for_each = var.enable_vnet_rule ? { "vnet" = var.subnet_id } : {}
+
   name      = "AllowVNet"
   server_id = azurerm_mssql_server.this.id
-  subnet_id = var.subnet_id
+  subnet_id = each.value
 }

@@ -25,6 +25,12 @@ variable "subnet_id" {
   default = null
 }
 
+variable "enable_vnet_rule" {
+  description = "Abilita la regola VNet sul SQL Server. Flag NOTO a plan time (evita count/for_each unknown)."
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

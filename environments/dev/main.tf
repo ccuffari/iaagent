@@ -67,6 +67,7 @@ module "sql_server" {
   admin_login         = var.sql_admin_login
   admin_password      = var.sql_admin_password
   subnet_id           = module.virtual_network.subnet_id
+  enable_vnet_rule    = true
   tags                = local.tags
 }
 

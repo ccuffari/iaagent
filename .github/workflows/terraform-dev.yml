@@ -33,30 +33,10 @@ jobs:
       - name: Terraform ${{ inputs.command }}
         run: |
           set +e
-          if [ "${{ inputs.command }}" = "apply" ]; then
-            echo "===== STEP 1: apply -target=module.virtual_network ====="
-            terraform apply -input=false -no-color -compact-warnings -auto-approve -target=module.virtual_network > /tmp/tf1.log 2>&1
-            rc1=$?
-            if [ $rc1 -ne 0 ]; then
-              echo "===== TERRAFORM ERROR (step 1) ====="
-              grep -A 40 "Error:" /tmp/tf1.log || tail -80 /tmp/tf1.log
-              exit $rc1
-            fi
-            echo "===== STEP 2: apply (full) ====="
-            terraform apply -input=false -no-color -compact-warnings -auto-approve > /tmp/tf2.log 2>&1
-            rc2=$?
-            if [ $rc2 -ne 0 ]; then
-              echo "===== TERRAFORM ERROR (step 2) ====="
-              grep -A 40 "Error:" /tmp/tf2.log || tail -80 /tmp/tf2.log
-              exit $rc2
-            fi
-            exit 0
-          else
-            terraform ${{ inputs.command }} -input=false -no-color -compact-warnings > /tmp/tf.log 2>&1
-            rc=$?
-            if [ $rc -ne 0 ]; then
-              echo "===== TERRAFORM ERROR ====="
-              grep -A 40 "Error:" /tmp/tf.log || tail -80 /tmp/tf.log
-            fi
-            exit $rc
+          terraform ${{ inputs.command }} -input=false -no-color -compact-warnings -auto-approve > /tmp/tf.log 2>&1
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "===== TERRAFORM ERROR ====="
+            grep -A 40 "Error:" /tmp/tf.log || tail -80 /tmp/tf.log
           fi
+          exit $rc
