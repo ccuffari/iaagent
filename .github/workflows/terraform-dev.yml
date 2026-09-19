@@ -50,6 +50,26 @@ jobs:
           git add state-list.txt
           git commit -m "ci: aggiorna state-list.txt [skip ci]" || echo "(nessuna modifica)"
           git push || echo "(push saltato)"
+      - name: Import mirato diagnostic settings esistenti
+        if: ${{ inputs.command == 'apply' }}
+        run: |
+          set +e
+          RG="rg-ai-dev-we-01"
+          SUB="$ARM_SUBSCRIPTION_ID"
+          BASE="/subscriptions/$SUB/resourceGroups/$RG/providers"
+          # Importa SOLO le risorse che esistono su Azure ma non sono nello state.
+          # Formato: indirizzo_terraform|id_azure
+          IMPORTS="
+            module.diag_key_vault.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.KeyVault/vaults/kv-ai-agent-dev-we-01|diag-keyvault
+            module.diag_sql_server.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01|diag-sqlserver
+          "
+          echo "$IMPORTS" | while IFS='|' read -r ADDR ID; do
+            [ -z "$ADDR" ] && continue
+            echo "::group::import $ADDR"
+            terraform import -input=false -no-color -lock=false "$ADDR" "$ID" 2>&1 || echo "(import saltato: gia' nello state o non presente)"
+            echo "::endgroup::"
+          done
+          exit 0
       - name: Terraform ${{ inputs.command }}
         if: ${{ inputs.command != 'state-list' }}
         run: |
