@@ -48,6 +48,7 @@ jobs:
             module.log_analytics.azurerm_log_analytics_workspace.this|$BASE/Microsoft.OperationalInsights/workspaces/log-ai-dev-we-01
             module.sql_server.azurerm_mssql_server.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01
             module.sql_database.azurerm_mssql_database.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01/databases/sql-db-ai-dev-we-01
+            module.budget.azurerm_consumption_budget_resource_group.this|$BASE/Microsoft.Consumption/budgets/budget-ai-dev-we-01
             module.diag_storage_account.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Storage/storageAccounts/saaidevwe01|diag-storage-account
             module.diag_adf.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.DataFactory/factories/adf-ai-dev-we-01|diag-adf
             module.diag_key_vault.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.KeyVault/vaults/kv-ai-agent-dev-we-01|diag-keyvault
