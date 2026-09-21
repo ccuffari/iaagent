@@ -94,20 +94,14 @@ module "budget" {
 }
 
 # --- Diagnostic settings (modulo riutilizzabile) ---
+# NOTA: diag_storage_blob NON e' gestito da Terraform: il provider azurerm va in
+# timeout su blobServices/default (bug noto). La risorsa puo' essere creata a
+# parte (es. via azapi o manualmente) senza impattare il deploy.
 module "diag_storage_account" {
   source                     = "../../modules/diagnostic_settings"
   name                       = "diag-storage-account"
   target_resource_id         = module.storage_account.id
   log_analytics_workspace_id = module.log_analytics.id
-  metrics                    = ["AllMetrics"]
-}
-
-module "diag_storage_blob" {
-  source                     = "../../modules/diagnostic_settings"
-  name                       = "diag-storage-blob"
-  target_resource_id         = "${module.storage_account.id}/blobServices/default"
-  log_analytics_workspace_id = module.log_analytics.id
-  enabled_logs               = ["StorageRead", "StorageWrite", "StorageDelete"]
   metrics                    = ["AllMetrics"]
 }
 
