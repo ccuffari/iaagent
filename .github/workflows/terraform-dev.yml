@@ -7,9 +7,9 @@ on:
         required: true
         default: plan
         type: choice
-        options: [init, validate, plan, apply, destroy, state-list]
+        options: [init, validate, plan, apply, destroy]
 permissions:
-  contents: write
+  contents: read
   id-token: write
 jobs:
   terraform:
@@ -30,38 +30,29 @@ jobs:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - name: Terraform init
-        run: |
-          echo "::group::terraform init"
-          terraform init -input=false -no-color
-          echo "::endgroup::"
-      - name: Terraform state list (scrive su file)
-        if: ${{ inputs.command == 'state-list' || inputs.command == 'plan' }}
-        run: |
-          echo "::group::terraform state list"
-          terraform state list -no-color > ../../state-list.txt 2>&1 || echo "(state list fallito)" > ../../state-list.txt
-          cat ../../state-list.txt
-          echo "::endgroup::"
-      - name: Commit state-list.txt
-        if: ${{ inputs.command == 'state-list' || inputs.command == 'plan' }}
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state-list.txt
-          git commit -m "ci: aggiorna state-list.txt [skip ci]" || echo "(nessuna modifica)"
-          git push || echo "(push saltato)"
-      - name: Import mirato diagnostic settings esistenti
+        run: terraform init -input=false -no-color
+      - name: Import risorse esistenti (idempotente)
         if: ${{ inputs.command == 'apply' }}
         run: |
           set +e
           RG="rg-ai-dev-we-01"
           SUB="$ARM_SUBSCRIPTION_ID"
           BASE="/subscriptions/$SUB/resourceGroups/$RG/providers"
-          # Importa SOLO le risorse che esistono su Azure ma non sono nello state.
-          # Formato: indirizzo_terraform|id_azure
           IMPORTS="
+            module.resource_group.azurerm_resource_group.this|/subscriptions/$SUB/resourceGroups/$RG
+            module.virtual_network.azurerm_virtual_network.this|$BASE/Microsoft.Network/virtualNetworks/vnet-ai-dev-we-01
+            module.virtual_network.azurerm_subnet.this|$BASE/Microsoft.Network/virtualNetworks/vnet-ai-dev-we-01/subnets/subnet-ai-dev-we-01
+            module.storage_account.azurerm_storage_account.this|$BASE/Microsoft.Storage/storageAccounts/saaidevwe01
+            module.data_factory.azurerm_data_factory.this|$BASE/Microsoft.DataFactory/factories/adf-ai-dev-we-01
+            module.key_vault.azurerm_key_vault.this|$BASE/Microsoft.KeyVault/vaults/kv-ai-agent-dev-we-01
+            module.log_analytics.azurerm_log_analytics_workspace.this|$BASE/Microsoft.OperationalInsights/workspaces/log-ai-dev-we-01
+            module.sql_server.azurerm_mssql_server.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01
+            module.sql_database.azurerm_mssql_database.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01/databases/sql-db-ai-dev-we-01
+            module.diag_storage_account.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Storage/storageAccounts/saaidevwe01|diag-storage-account
+            module.diag_adf.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.DataFactory/factories/adf-ai-dev-we-01|diag-adf
             module.diag_key_vault.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.KeyVault/vaults/kv-ai-agent-dev-we-01|diag-keyvault
             module.diag_sql_server.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01|diag-sqlserver
+            module.diag_sql_database.azurerm_monitor_diagnostic_setting.this|$BASE/Microsoft.Sql/servers/sql-ai-dev-we-01/databases/sql-db-ai-dev-we-01|diag-sqldb
           "
           echo "$IMPORTS" | while IFS='|' read -r ADDR ID; do
             [ -z "$ADDR" ] && continue
@@ -71,7 +62,6 @@ jobs:
           done
           exit 0
       - name: Terraform ${{ inputs.command }}
-        if: ${{ inputs.command != 'state-list' }}
         run: |
           set +e
           CMD="${{ inputs.command }}"
@@ -79,9 +69,8 @@ jobs:
           if [ "$CMD" = "apply" ] || [ "$CMD" = "destroy" ]; then
             EXTRA="-auto-approve"
           fi
-          echo "::group::terraform $CMD (lock=false)"
-          echo "Comando: terraform $CMD -input=false -no-color -compact-warnings -lock=false $EXTRA"
-          terraform $CMD -input=false -no-color -compact-warnings -lock=false $EXTRA 2>&1 | tee /tmp/tf.log
+          echo "::group::terraform $CMD"
+          terraform $CMD -input=false -no-color -compact-warnings $EXTRA 2>&1 | tee /tmp/tf.log
           rc=${PIPESTATUS[0]}
           echo "::endgroup::"
           if [ $rc -ne 0 ]; then
