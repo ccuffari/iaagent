@@ -30,6 +30,19 @@ module "storage_account" {
   tags                     = local.tags
 }
 
+module "storage_account_02" {
+  source                   = "../../modules/storage_account"
+  name                     = "saaidevwe02"
+  resource_group_name      = module.resource_group.name
+  location                 = local.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  network_default_action   = "Deny"
+  allowed_subnet_ids       = [module.virtual_network.subnet_id]
+  allowed_ip_addresses     = var.allowed_ip_addresses
+  tags                     = local.tags
+}
+
 module "data_factory" {
   source              = "../../modules/data_factory"
   name                = "adf-ai-dev-we-01"
@@ -101,6 +114,14 @@ module "diag_storage_account" {
   source                     = "../../modules/diagnostic_settings"
   name                       = "diag-storage-account"
   target_resource_id         = module.storage_account.id
+  log_analytics_workspace_id = module.log_analytics.id
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_storage_account_02" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-storage-account-02"
+  target_resource_id         = module.storage_account_02.id
   log_analytics_workspace_id = module.log_analytics.id
   metrics                    = ["AllMetrics"]
 }
