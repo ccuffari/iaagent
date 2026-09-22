@@ -13,12 +13,6 @@ variable "location" {
   type        = string
 }
 
-variable "sku_name" {
-  description = "SKU dell'account Purview (Standard)."
-  type        = string
-  default     = "Standard"
-}
-
 variable "tags" {
   description = "Tag da applicare alle risorse."
   type        = map(string)
