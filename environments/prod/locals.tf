@@ -1,7 +1,7 @@
 data "azurerm_client_config" "current" {}
 
 locals {
-  environment = "dev"
+  environment = "prod"
   location    = "westeurope"
   workload    = "ai"
   region      = "we"
