@@ -8,6 +8,10 @@ on:
         default: configure
         type: choice
         options: [configure]
+  push:
+    paths:
+      - "scripts/purview_configure.py"
+      - ".github/workflows/purview-catalog-scan.yml"
 permissions:
   contents: read
   id-token: write
