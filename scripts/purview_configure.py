@@ -2,7 +2,7 @@
 """
 Configura Azure Purview: registra data source e crea/avvia le scan.
 
-Usa l'SDK ufficiale azure-purview-scanning (gestisce endpoint/versioni/body).
+Usa l'SDK ufficiale azure-purview-scanning.
 Autenticazione via DefaultAzureCredential (azure/login nel runner).
 
 Idempotente: se una data source/scan esiste gia', la aggiorna.
@@ -20,26 +20,25 @@ SUBSCRIPTION_ID = os.environ["ARM_SUBSCRIPTION_ID"]
 
 ENDPOINT = f"https://{PURVIEW_ACCOUNT}.purview.azure.com"
 
+# La root collection ha come referenceName il nome dell'account Purview.
+ROOT_COLLECTION = PURVIEW_ACCOUNT
+
 DATA_SOURCES = {
     "ds-storage-01": {
         "kind": "AzureStorage",
         "endpoint": "https://saaidevwe01.blob.core.windows.net/",
-        "collection": "root",
     },
     "ds-storage-02": {
         "kind": "AzureStorage",
         "endpoint": "https://saaidevwe02.blob.core.windows.net/",
-        "collection": "root",
     },
     "ds-adf": {
         "kind": "AzureDataFactory",
         "endpoint": f"/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}/providers/Microsoft.DataFactory/factories/adf-ai-dev-we-01",
-        "collection": "root",
     },
     "ds-sql": {
         "kind": "AzureSqlDatabase",
         "endpoint": "sql-ai-dev-we-01.database.windows.net",
-        "collection": "root",
     },
 }
 
@@ -50,7 +49,9 @@ def register_data_source(client, name, cfg):
         "kind": cfg["kind"],
         "properties": {
             "endpoint": cfg["endpoint"],
-            "collection": {"referenceName": cfg["collection"], "type": "CollectionReference"},
+            "resourceGroup": RESOURCE_GROUP,
+            "subscriptionId": SUBSCRIPTION_ID,
+            "collection": {"referenceName": ROOT_COLLECTION, "type": "CollectionReference"},
         },
     }
     try:
