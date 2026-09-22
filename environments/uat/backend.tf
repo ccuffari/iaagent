@@ -1,7 +1,7 @@
 terraform {
   backend "azurerm" {
-    resource_group_name  = "rgtfstateuatwe01"
-    storage_account_name = "sttfstateuatwe01"
+    resource_group_name  = "rgtfstatedevwe01"
+    storage_account_name = "sttfstatedevwe01"
     container_name       = "tfstate"
     key                  = "uat/terraform.tfstate"
     use_azuread_auth     = true
