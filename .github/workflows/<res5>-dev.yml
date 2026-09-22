@@ -1,7 +1,0 @@
-# Workflow DUPLICATO e DISABILITATO.
-#
-# La pipeline attiva per l'ambiente dev e':
-#   .github/workflows/terraform-dev.yml
-#
-# Questo file era un duplicato (senza concurrency/timeout/validate) e non deve
-# girare. Per riattivare un workflow qui, aggiungi un blocco 'on:' valido.
