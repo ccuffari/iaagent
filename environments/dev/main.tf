@@ -7,11 +7,11 @@ module "resource_group" {
 
 module "virtual_network" {
   source              = "../../modules/virtual_network"
-  name                = "vnet-ai-dev-we-01"
+  name                = local.vnet_name
   resource_group_name = module.resource_group.name
   location            = local.location
   address_space       = ["10.0.0.0/16"]
-  subnet_name         = "subnet-ai-dev-we-01"
+  subnet_name         = local.subnet_name
   subnet_prefixes     = ["10.0.1.0/24"]
   service_endpoints   = ["Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.Sql"]
   tags                = local.tags
@@ -19,7 +19,7 @@ module "virtual_network" {
 
 module "storage_account" {
   source                   = "../../modules/storage_account"
-  name                     = "saaidevwe01"
+  name                     = local.storage_account_name
   resource_group_name      = module.resource_group.name
   location                 = local.location
   account_tier             = "Standard"
@@ -32,7 +32,7 @@ module "storage_account" {
 
 module "storage_account_02" {
   source                   = "../../modules/storage_account"
-  name                     = "saaidevwe02"
+  name                     = local.storage_account_02_name
   resource_group_name      = module.resource_group.name
   location                 = local.location
   account_tier             = "Standard"
@@ -45,7 +45,7 @@ module "storage_account_02" {
 
 module "data_factory" {
   source              = "../../modules/data_factory"
-  name                = "adf-ai-dev-we-01"
+  name                = local.data_factory_name
   resource_group_name = module.resource_group.name
   location            = local.location
   tags                = local.tags
@@ -53,7 +53,7 @@ module "data_factory" {
 
 module "key_vault" {
   source                 = "../../modules/key_vault"
-  name                   = "kv-ai-agent-dev-we-01"
+  name                   = local.key_vault_name
   resource_group_name    = module.resource_group.name
   location               = local.location
   tenant_id              = local.tenant_id
@@ -66,7 +66,7 @@ module "key_vault" {
 
 module "log_analytics" {
   source              = "../../modules/log_analytics"
-  name                = "log-ai-dev-we-01"
+  name                = local.log_analytics_name
   resource_group_name = module.resource_group.name
   location            = local.location
   tags                = local.tags
@@ -74,7 +74,7 @@ module "log_analytics" {
 
 module "sql_server" {
   source              = "../../modules/sql_server"
-  name                = "sql-ai-dev-we-01"
+  name                = local.sql_server_name
   resource_group_name = module.resource_group.name
   location            = local.location
   admin_login         = var.sql_admin_login
@@ -86,7 +86,7 @@ module "sql_server" {
 
 module "sql_database" {
   source    = "../../modules/sql_database"
-  name      = "sql-db-ai-dev-we-01"
+  name      = local.sql_database_name
   server_id = module.sql_server.id
   sku_name  = "S0"
 }
@@ -98,7 +98,7 @@ module "sql_database" {
 #
 # module "purview" {
 #   source              = "../../modules/purview"
-#   name                = "pvw-ai-dev-we-01"
+#   name                = "pvw-${local.suffix}"
 #   resource_group_name = module.resource_group.name
 #   location            = local.location
 #   tags                = local.tags
@@ -126,7 +126,7 @@ module "sql_database" {
 # --- Budget + alerting cost ---
 module "budget" {
   source            = "../../modules/budget"
-  name              = "budget-ai-dev-we-01"
+  name              = local.budget_name
   resource_group_id = module.resource_group.id
   amount            = var.budget_amount
   start_date        = var.budget_start_date
