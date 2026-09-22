@@ -1,1 +1,9 @@
-__DELETE__
+# Pipeline Terraform dev DISABILITATA su main.
+#
+# La pipeline attiva per l'ambiente dev vive sul branch 'dev':
+#   .github/workflows/terraform-dev.yml (branch dev)
+#
+# Su main non deve girare alcun deploy: main e' il branch di default e
+# serve solo come base per le promozioni GitFlow (feature -> dev -> uat -> prod).
+#
+# Per riattivare un workflow qui, aggiungi un blocco 'on:' valido.
