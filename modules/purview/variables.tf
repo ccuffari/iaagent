@@ -18,3 +18,12 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "role_assignments" {
+  description = "Mappa di role assignment da assegnare alla Managed Identity di Purview (chiave -> {scope, role})."
+  type = map(object({
+    scope = string
+    role  = string
+  }))
+  default = {}
+}
