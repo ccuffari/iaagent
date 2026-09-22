@@ -56,7 +56,7 @@ module "databricks" {
   name                = local.databricks_name
   resource_group_name = module.resource_group.name
   location            = local.location
-  sku                 = "standard"
+  sku                 = "premium"
   tags                = local.tags
 }
 
