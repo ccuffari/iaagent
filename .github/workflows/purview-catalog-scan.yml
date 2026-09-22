@@ -36,5 +36,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install Purview SDK
+        run: pip install azure-purview-scanning azure-purview-administration azure-identity
       - name: Configure Purview (data sources + scans)
         run: python scripts/purview_configure.py

@@ -2,26 +2,25 @@
 """
 Configura Azure Purview: registra data source e crea/avvia le scan.
 
-Usa le Purview REST API (scanning) con autenticazione via az CLI
-(gia' autenticato nel runner da azure/login).
+Usa l'SDK ufficiale azure-purview-scanning (gestisce endpoint/versioni/body).
+Autenticazione via DefaultAzureCredential (azure/login nel runner).
 
 Idempotente: se una data source/scan esiste gia', la aggiorna.
 """
 import os
 import sys
-import json
-import subprocess
-import urllib.request
-import urllib.error
+
+from azure.identity import DefaultAzureCredential
+from azure.purview.scanning import PurviewScanningClient
+from azure.purview.administration import PurviewAccountClient
+from azure.core.exceptions import HttpResponseError
 
 PURVIEW_ACCOUNT = os.environ.get("PURVIEW_ACCOUNT", "pvw-ai-dev-we-01")
 RESOURCE_GROUP = os.environ.get("PURVIEW_RESOURCE_GROUP", "rg-ai-dev-we-01")
 SUBSCRIPTION_ID = os.environ["ARM_SUBSCRIPTION_ID"]
 
-SCAN_ENDPOINT = f"https://{PURVIEW_ACCOUNT}.scan.purview.azure.com"
-API_VERSION = "2022-07-01-preview"
+ENDPOINT = f"https://{PURVIEW_ACCOUNT}.purview.azure.com"
 
-# Data source da registrare: nome -> (kind, endpoint, collection)
 DATA_SOURCES = {
     "ds-storage-01": {
         "kind": "AzureStorage",
@@ -46,36 +45,7 @@ DATA_SOURCES = {
 }
 
 
-def get_token():
-    out = subprocess.check_output(
-        ["az", "account", "get-access-token",
-         "--resource", "https://purview.azure.net",
-         "--query", "accessToken", "-o", "tsv"],
-        text=True,
-    )
-    return out.strip()
-
-
-def api(method, url, token, body=None):
-    data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(url, data=data, method=method)
-    req.add_header("Authorization", f"Bearer {token}")
-    req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req) as resp:
-            raw = resp.read().decode()
-            return resp.status, (json.loads(raw) if raw else {})
-    except urllib.error.HTTPError as e:
-        raw = e.read().decode()
-        try:
-            parsed = json.loads(raw)
-        except Exception:
-            parsed = {"raw": raw}
-        return e.code, parsed
-
-
-def register_data_source(name, cfg, token):
-    url = f"{SCAN_ENDPOINT}/datasources/{name}?api-version={API_VERSION}"
+def register_data_source(client, name, cfg):
     body = {
         "name": name,
         "kind": cfg["kind"],
@@ -84,15 +54,16 @@ def register_data_source(name, cfg, token):
             "collection": {"referenceName": cfg["collection"], "type": "CollectionReference"},
         },
     }
-    status, resp = api("PUT", url, token, body)
-    print(f"[datasource] {name}: HTTP {status}")
-    if status >= 400:
-        print(f"  -> {json.dumps(resp)[:500]}")
-    return status < 400
+    try:
+        client.data_sources.create_or_update(data_source_name=name, body=body)
+        print(f"[datasource] {name}: OK")
+        return True
+    except HttpResponseError as e:
+        print(f"[datasource] {name}: ERRORE {e.status_code} - {e.message}")
+        return False
 
 
-def create_scan(ds_name, scan_name, token):
-    url = f"{SCAN_ENDPOINT}/datasources/{ds_name}/scans/{scan_name}?api-version={API_VERSION}"
+def create_scan(client, ds_name, scan_name):
     if ds_name.startswith("ds-storage"):
         kind, ruleset = "AzureStorageMsi", "AzureStorage"
     elif ds_name.startswith("ds-adf"):
@@ -107,33 +78,39 @@ def create_scan(ds_name, scan_name, token):
             "scanRulesetType": "System",
         },
     }
-    status, resp = api("PUT", url, token, body)
-    print(f"[scan] {ds_name}/{scan_name}: HTTP {status}")
-    if status >= 400:
-        print(f"  -> {json.dumps(resp)[:500]}")
-    return status < 400
+    try:
+        client.scans.create_or_update(data_source_name=ds_name, scan_name=scan_name, body=body)
+        print(f"[scan] {ds_name}/{scan_name}: OK")
+        return True
+    except HttpResponseError as e:
+        print(f"[scan] {ds_name}/{scan_name}: ERRORE {e.status_code} - {e.message}")
+        return False
 
 
-def run_scan(ds_name, scan_name, token):
-    url = f"{SCAN_ENDPOINT}/datasources/{ds_name}/scans/{scan_name}/run?api-version={API_VERSION}"
-    status, resp = api("POST", url, token, {})
-    print(f"[run] {ds_name}/{scan_name}: HTTP {status}")
-    return status < 400
+def run_scan(client, ds_name, scan_name):
+    try:
+        client.scans.run_scan(data_source_name=ds_name, scan_name=scan_name)
+        print(f"[run] {ds_name}/{scan_name}: avviata")
+        return True
+    except HttpResponseError as e:
+        print(f"[run] {ds_name}/{scan_name}: ERRORE {e.status_code} - {e.message}")
+        return False
 
 
 def main():
-    token = get_token()
-    print(f"Purview: {PURVIEW_ACCOUNT} ({SCAN_ENDPOINT})")
+    cred = DefaultAzureCredential()
+    client = PurviewScanningClient(endpoint=ENDPOINT, credential=cred)
+    print(f"Purview: {PURVIEW_ACCOUNT} ({ENDPOINT})")
 
     ok = True
     for name, cfg in DATA_SOURCES.items():
-        if not register_data_source(name, cfg, token):
+        if not register_data_source(client, name, cfg):
             ok = False
 
     for name in DATA_SOURCES:
         scan_name = f"scan-{name}"
-        if create_scan(name, scan_name, token):
-            run_scan(name, scan_name, token)
+        if create_scan(client, name, scan_name):
+            run_scan(client, name, scan_name)
 
     if not ok:
         print("ATTENZIONE: alcune data source non sono state registrate.")
