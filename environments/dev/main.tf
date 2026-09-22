@@ -43,6 +43,31 @@ module "storage_account_02" {
   tags                     = local.tags
 }
 
+# --- Data lake: container per le zone medallion (bronze/silver/gold) + landing ---
+module "container_bronze" {
+  source               = "../../modules/storage_container"
+  name                 = "bronze"
+  storage_account_name = module.storage_account.name
+}
+
+module "container_silver" {
+  source               = "../../modules/storage_container"
+  name                 = "silver"
+  storage_account_name = module.storage_account.name
+}
+
+module "container_gold" {
+  source               = "../../modules/storage_container"
+  name                 = "gold"
+  storage_account_name = module.storage_account.name
+}
+
+module "container_landing" {
+  source               = "../../modules/storage_container"
+  name                 = "landing"
+  storage_account_name = module.storage_account.name
+}
+
 module "data_factory" {
   source              = "../../modules/data_factory"
   name                = local.data_factory_name
@@ -58,6 +83,14 @@ module "databricks" {
   location            = local.location
   sku                 = "premium"
   tags                = local.tags
+}
+
+# RBAC: la Managed Identity del workspace Databricks accede ai dati dello storage
+# (lettura/scrittura blob) senza segreti.
+resource "azurerm_role_assignment" "databricks_storage_blob_contributor" {
+  scope                = module.storage_account.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = module.databricks.principal_id
 }
 
 module "key_vault" {
@@ -173,6 +206,14 @@ module "diag_adf" {
   target_resource_id         = module.data_factory.id
   log_analytics_workspace_id = module.log_analytics.id
   enabled_logs               = ["PipelineRuns", "ActivityRuns", "TriggerRuns"]
+  metrics                    = ["AllMetrics"]
+}
+
+module "diag_databricks" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-databricks"
+  target_resource_id         = module.databricks.id
+  log_analytics_workspace_id = module.log_analytics.id
   metrics                    = ["AllMetrics"]
 }
 
