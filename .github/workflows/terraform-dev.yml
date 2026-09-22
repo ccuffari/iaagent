@@ -31,6 +31,17 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
       - name: Terraform init
         run: terraform init -input=false -no-color
+      - name: Register resource providers (idempotente)
+        if: ${{ inputs.command == 'apply' }}
+        run: |
+          set +e
+          for NS in Microsoft.Purview; do
+            echo "::group::register $NS"
+            az provider register --namespace "$NS" --wait 2>&1 || echo "(registrazione $NS: esito non-zero, proseguo)"
+            az provider show --namespace "$NS" --query "registrationState" -o tsv 2>&1 || true
+            echo "::endgroup::"
+          done
+          exit 0
       - name: Import risorse esistenti (idempotente)
         if: ${{ inputs.command == 'apply' }}
         run: |
