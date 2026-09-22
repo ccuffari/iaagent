@@ -12,7 +12,6 @@ import sys
 
 from azure.identity import DefaultAzureCredential
 from azure.purview.scanning import PurviewScanningClient
-from azure.purview.administration import PurviewAccountClient
 from azure.core.exceptions import HttpResponseError
 
 PURVIEW_ACCOUNT = os.environ.get("PURVIEW_ACCOUNT", "pvw-ai-dev-we-01")
