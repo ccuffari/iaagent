@@ -36,4 +36,35 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
       - run: terraform init -input=false
       - run: terraform validate -no-color
-      - run: terraform ${{ inputs.command }} -input=false ${{ (inputs.command == 'apply' || inputs.command == 'destroy') && '-auto-approve' || '' }}
+
+      # PLAN: salvato su file e STAMPATO nei log, cosi' il piano e' sempre
+      # ispezionabile (anche a run riuscita) e i destroy non passano inosservati.
+      - name: Terraform plan
+        if: ${{ inputs.command == 'plan' || inputs.command == 'apply' }}
+        run: |
+          terraform plan -input=false -out=tfplan -no-color
+          echo "===== PIANO (terraform show) ====="
+          terraform show -no-color tfplan
+
+      # GUARDRAIL: se il piano distrugge risorse, l'apply si BLOCCA.
+      # Un destroy non atteso e' quasi sempre un drift o un refactor di indirizzo.
+      - name: Guardrail destroy
+        if: ${{ inputs.command == 'apply' }}
+        run: |
+          DESTROYS=$(terraform show -json tfplan | jq '[.resource_changes[]? | select(.change.actions | index("delete"))] | length')
+          echo "Risorse da distruggere nel piano: $DESTROYS"
+          if [ "$DESTROYS" -gt 0 ]; then
+            echo "::error::Il piano DISTRUGGE $DESTROYS risorse. Apply BLOCCATO."
+            echo "::error::Verifica il piano (drift/refactor) prima di procedere."
+            terraform show -no-color tfplan | grep -A2 'will be destroyed' || true
+            exit 1
+          fi
+          echo "OK: nessun destroy nel piano."
+
+      - name: Terraform apply
+        if: ${{ inputs.command == 'apply' }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Terraform init/validate/plan/destroy (comandi diretti)
+        if: ${{ inputs.command == 'init' || inputs.command == 'validate' || inputs.command == 'destroy' }}
+        run: terraform ${{ inputs.command }} -input=false ${{ inputs.command == 'destroy' && '-auto-approve' || '' }}
