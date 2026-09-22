@@ -97,7 +97,6 @@ module "purview" {
   name                = "pvw-ai-dev-we-01"
   resource_group_name = module.resource_group.name
   location            = local.location
-  sku_name            = "Standard"
   tags                = local.tags
 }
 
