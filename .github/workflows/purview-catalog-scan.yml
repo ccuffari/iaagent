@@ -1,0 +1,36 @@
+name: Purview catalog & scan
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Azione Purview"
+        required: true
+        default: configure
+        type: choice
+        options: [configure]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  purview:
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      PURVIEW_ACCOUNT: pvw-ai-dev-we-01
+      PURVIEW_RESOURCE_GROUP: rg-ai-dev-we-01
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ secrets.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.ARM_TENANT_ID }}"}'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure Purview (data sources + scans)
+        run: python scripts/purview_configure.py
