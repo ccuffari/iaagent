@@ -1,9 +1,39 @@
-# Pipeline Terraform dev DISABILITATA su main.
-#
-# La pipeline attiva per l'ambiente dev vive sul branch 'dev':
-#   .github/workflows/terraform-dev.yml (branch dev)
-#
-# Su main non deve girare alcun deploy: main e' il branch di default e
-# serve solo come base per le promozioni GitFlow (feature -> dev -> uat -> prod).
-#
-# Per riattivare un workflow qui, aggiungi un blocco 'on:' valido.
+name: Terraform dev
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Comando Terraform (dev)"
+        required: true
+        default: plan
+        type: choice
+        options: [init, validate, plan, apply, destroy]
+# Serializza le run dello stesso ambiente: niente collisioni sul lock/lease dello state.
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: false
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: dev
+    # Timeout esplicito: una operazione appesa fallisce con log, non viene uccisa muta.
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: environments/dev
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      TF_VAR_sql_admin_login: ${{ secrets.TF_VAR_sql_admin_login }}
+      TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_sql_admin_password }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init -input=false
+      - run: terraform validate -no-color
+      - run: terraform ${{ inputs.command }} -input=false ${{ (inputs.command == 'apply' || inputs.command == 'destroy') && '-auto-approve' || '' }}
