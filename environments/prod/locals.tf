@@ -18,7 +18,9 @@ locals {
   storage_account_name    = "sa${local.workload}${local.environment}${local.region}${local.instance}"
   storage_account_02_name = "sa${local.workload}${local.environment}${local.region}02"
   data_factory_name       = "adf-${local.suffix}"
-  key_vault_name          = "kv-${local.suffix}"
+  # Key Vault: nome globalmente unico; 'kv-ai-prod-we-01' risulta occupato/soft-deleted,
+  # si usa l'istanza 02.
+  key_vault_name          = "kv-${local.workload}-${local.environment}-${local.region}-02"
   log_analytics_name      = "log-${local.suffix}"
   sql_server_name         = "sql-${local.suffix}"
   sql_database_name       = "sql-db-${local.suffix}"
