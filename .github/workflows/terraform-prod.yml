@@ -1,16 +1,16 @@
-name: Terraform dev
+name: Terraform prod
 on:
   workflow_dispatch:
     inputs:
       command:
-        description: "Comando Terraform (dev)"
+        description: "Comando Terraform (prod)"
         required: true
         default: plan
         type: choice
         options: [init, validate, plan, apply, destroy]
 # Serializza le run dello stesso ambiente: niente collisioni sul lock/lease dello state.
 concurrency:
-  group: terraform-dev
+  group: terraform-prod
   cancel-in-progress: false
 permissions:
   contents: read
@@ -18,12 +18,12 @@ permissions:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: prod
     # Timeout esplicito: una operazione appesa fallisce con log, non viene uccisa muta.
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: environments/dev
+        working-directory: environments/prod
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
