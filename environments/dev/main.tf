@@ -92,12 +92,32 @@ module "sql_database" {
 }
 
 # --- Azure Purview (data governance) ---
+# La MI di Purview riceve i ruoli di lettura sulle risorse da catalogare/scansionare.
 module "purview" {
   source              = "../../modules/purview"
   name                = "pvw-ai-dev-we-01"
   resource_group_name = module.resource_group.name
   location            = local.location
   tags                = local.tags
+
+  role_assignments = {
+    rg_reader = {
+      scope = module.resource_group.id
+      role  = "Reader"
+    }
+    storage01_blob_reader = {
+      scope = module.storage_account.id
+      role  = "Storage Blob Data Reader"
+    }
+    storage02_blob_reader = {
+      scope = module.storage_account_02.id
+      role  = "Storage Blob Data Reader"
+    }
+    adf_reader = {
+      scope = module.data_factory.id
+      role  = "Data Factory Reader"
+    }
+  }
 }
 
 # --- Budget + alerting cost ---
