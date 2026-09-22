@@ -1,0 +1,35 @@
+name: Terraform bootstrap (state backend)
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Comando Terraform (bootstrap)"
+        required: true
+        default: plan
+        type: choice
+        options: [init, validate, plan, apply]
+concurrency:
+  group: terraform-bootstrap
+  cancel-in-progress: false
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: bootstrap
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init -input=false
+      - run: terraform validate -no-color
+      - run: terraform ${{ inputs.command }} -input=false ${{ inputs.command == 'apply' && '-auto-approve' || '' }}
