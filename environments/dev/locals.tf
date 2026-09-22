@@ -23,6 +23,8 @@ locals {
   sql_server_name         = "sql-${local.suffix}"
   sql_database_name       = "sql-db-${local.suffix}"
   budget_name             = "budget-${local.suffix}"
+  # Azure Databricks: abbreviazione Azure 'dbw'.
+  databricks_name         = "dbw-${local.suffix}"
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   tags = {

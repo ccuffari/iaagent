@@ -51,6 +51,15 @@ module "data_factory" {
   tags                = local.tags
 }
 
+module "databricks" {
+  source              = "../../modules/databricks"
+  name                = local.databricks_name
+  resource_group_name = module.resource_group.name
+  location            = local.location
+  sku                 = "standard"
+  tags                = local.tags
+}
+
 module "key_vault" {
   source                 = "../../modules/key_vault"
   name                   = local.key_vault_name
