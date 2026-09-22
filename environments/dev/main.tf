@@ -113,9 +113,9 @@ module "purview" {
       scope = module.storage_account_02.id
       role  = "Storage Blob Data Reader"
     }
-    adf_reader = {
+    adf_contributor = {
       scope = module.data_factory.id
-      role  = "Data Factory Reader"
+      role  = "Data Factory Contributor"
     }
   }
 }
