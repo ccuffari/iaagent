@@ -7,8 +7,11 @@
 #     module: <nome modulo in modules/>
 #     abbr: <abbreviazione naming convention>
 #     defaults: <proprieta' di default>
+#
+# NOTA: draw.io usa nomi plurali per molte icone Azure (es. sql_servers,
+# storage_accounts). Il tool normalizza automaticamente singolare/plurale.
 
-version: 1
+version: 2
 
 mappings:
   # --- Compute ---
@@ -42,6 +45,13 @@ mappings:
     defaults:
       version: "12.0"
 
+  mxgraph.azure.sql_servers:
+    terraform_type: azurerm_mssql_server
+    module: sql_server
+    abbr: sql
+    defaults:
+      version: "12.0"
+
   mxgraph.azure.sql_database:
     terraform_type: azurerm_mssql_database
     module: sql_database
@@ -49,7 +59,22 @@ mappings:
     defaults:
       sku: S0
 
+  mxgraph.azure.sql_databases:
+    terraform_type: azurerm_mssql_database
+    module: sql_database
+    abbr: sqldb
+    defaults:
+      sku: S0
+
   mxgraph.azure.storage:
+    terraform_type: azurerm_storage_account
+    module: storage_account
+    abbr: sa
+    defaults:
+      tier: Standard
+      replication: LRS
+
+  mxgraph.azure.storage_accounts:
     terraform_type: azurerm_storage_account
     module: storage_account
     abbr: sa
@@ -97,7 +122,21 @@ mappings:
     defaults:
       address_space: 10.0.0.0/16
 
+  mxgraph.azure.virtual_networks:
+    terraform_type: azurerm_virtual_network
+    module: virtual_network
+    abbr: vnet
+    defaults:
+      address_space: 10.0.0.0/16
+
   mxgraph.azure.subnet:
+    terraform_type: azurerm_subnet
+    module: subnet
+    abbr: snet
+    defaults:
+      prefix: 10.0.1.0/24
+
+  mxgraph.azure.subnets:
     terraform_type: azurerm_subnet
     module: subnet
     abbr: snet
@@ -110,13 +149,13 @@ mappings:
     abbr: pe
     defaults: {}
 
-  mxgraph.azure.nsg:
+  mxgraph.azure.network_security_groups:
     terraform_type: azurerm_network_security_group
     module: nsg
     abbr: nsg
     defaults: {}
 
-  mxgraph.azure.public_ip:
+  mxgraph.azure.public_ip_addresses:
     terraform_type: azurerm_public_ip
     module: public_ip
     abbr: pip
@@ -131,6 +170,13 @@ mappings:
     defaults:
       sku: standard
 
+  mxgraph.azure.key_vaults:
+    terraform_type: azurerm_key_vault
+    module: key_vault
+    abbr: kv
+    defaults:
+      sku: standard
+
   mxgraph.azure.managed_identity:
     terraform_type: azurerm_user_assigned_identity
     module: managed_identity
@@ -139,6 +185,14 @@ mappings:
 
   # --- Monitoring ---
   mxgraph.azure.log_analytics:
+    terraform_type: azurerm_log_analytics_workspace
+    module: log_analytics
+    abbr: log
+    defaults:
+      sku: PerGB2018
+      retention: 30
+
+  mxgraph.azure.log_analytics_workspaces:
     terraform_type: azurerm_log_analytics_workspace
     module: log_analytics
     abbr: log
@@ -168,7 +222,7 @@ mappings:
     defaults:
       sku: Standard
 
-  mxgraph.azure.event_hub:
+  mxgraph.azure.event_hubs:
     terraform_type: azurerm_eventhub_namespace
     module: event_hub
     abbr: evh
