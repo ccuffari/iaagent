@@ -1,0 +1,224 @@
+# Mapping icone draw.io -> risorse Terraform
+# Usato dal tool iac.from_diagram per interpretare i nodi del diagramma.
+#
+# Struttura:
+#   <icona_drawio>:
+#     terraform_type: <tipo risorsa Terraform>
+#     module: <nome modulo in modules/>
+#     abbr: <abbreviazione naming convention>
+#     defaults: <proprieta' di default>
+
+version: 1
+
+mappings:
+  # --- Compute ---
+  mxgraph.azure.virtual_machine:
+    terraform_type: azurerm_linux_virtual_machine
+    module: virtual_machine
+    abbr: vm
+    defaults:
+      size: Standard_B1s
+
+  mxgraph.azure.function:
+    terraform_type: azurerm_linux_function_app
+    module: function_app
+    abbr: func
+    defaults:
+      runtime: python
+      version: "3.11"
+
+  mxgraph.azure.app_service:
+    terraform_type: azurerm_linux_web_app
+    module: app_service
+    abbr: app
+    defaults:
+      sku: B1
+
+  # --- Data ---
+  mxgraph.azure.sql:
+    terraform_type: azurerm_mssql_server
+    module: sql_server
+    abbr: sql
+    defaults:
+      version: "12.0"
+
+  mxgraph.azure.sql_database:
+    terraform_type: azurerm_mssql_database
+    module: sql_database
+    abbr: sqldb
+    defaults:
+      sku: S0
+
+  mxgraph.azure.storage:
+    terraform_type: azurerm_storage_account
+    module: storage_account
+    abbr: sa
+    defaults:
+      tier: Standard
+      replication: LRS
+
+  mxgraph.azure.data_factory:
+    terraform_type: azurerm_data_factory
+    module: data_factory
+    abbr: adf
+    defaults: {}
+
+  mxgraph.azure.databricks:
+    terraform_type: azurerm_databricks_workspace
+    module: databricks
+    abbr: dbw
+    defaults:
+      sku: premium
+
+  mxgraph.azure.synapse:
+    terraform_type: azurerm_synapse_workspace
+    module: synapse
+    abbr: syn
+    defaults: {}
+
+  # --- Storage ---
+  mxgraph.azure.blob_storage:
+    terraform_type: azurerm_storage_container
+    module: storage_container
+    abbr: cont
+    defaults: {}
+
+  mxgraph.azure.file_share:
+    terraform_type: azurerm_storage_share
+    module: storage_share
+    abbr: share
+    defaults: {}
+
+  # --- Networking ---
+  mxgraph.azure.virtual_network:
+    terraform_type: azurerm_virtual_network
+    module: virtual_network
+    abbr: vnet
+    defaults:
+      address_space: 10.0.0.0/16
+
+  mxgraph.azure.subnet:
+    terraform_type: azurerm_subnet
+    module: subnet
+    abbr: snet
+    defaults:
+      prefix: 10.0.1.0/24
+
+  mxgraph.azure.private_endpoint:
+    terraform_type: azurerm_private_endpoint
+    module: private_endpoint
+    abbr: pe
+    defaults: {}
+
+  mxgraph.azure.nsg:
+    terraform_type: azurerm_network_security_group
+    module: nsg
+    abbr: nsg
+    defaults: {}
+
+  mxgraph.azure.public_ip:
+    terraform_type: azurerm_public_ip
+    module: public_ip
+    abbr: pip
+    defaults:
+      allocation: Static
+
+  # --- Security ---
+  mxgraph.azure.key_vault:
+    terraform_type: azurerm_key_vault
+    module: key_vault
+    abbr: kv
+    defaults:
+      sku: standard
+
+  mxgraph.azure.managed_identity:
+    terraform_type: azurerm_user_assigned_identity
+    module: managed_identity
+    abbr: id
+    defaults: {}
+
+  # --- Monitoring ---
+  mxgraph.azure.log_analytics:
+    terraform_type: azurerm_log_analytics_workspace
+    module: log_analytics
+    abbr: log
+    defaults:
+      sku: PerGB2018
+      retention: 30
+
+  mxgraph.azure.application_insights:
+    terraform_type: azurerm_application_insights
+    module: application_insights
+    abbr: appi
+    defaults:
+      type: web
+
+  mxgraph.azure.monitor:
+    terraform_type: azurerm_monitor_metric_alert
+    module: alert_to_agent
+    abbr: alert
+    defaults:
+      severity: 2
+
+  # --- Integration ---
+  mxgraph.azure.service_bus:
+    terraform_type: azurerm_servicebus_namespace
+    module: service_bus
+    abbr: sb
+    defaults:
+      sku: Standard
+
+  mxgraph.azure.event_hub:
+    terraform_type: azurerm_eventhub_namespace
+    module: event_hub
+    abbr: evh
+    defaults:
+      sku: Standard
+
+  mxgraph.azure.logic_apps:
+    terraform_type: azurerm_logic_app_workflow
+    module: logic_app
+    abbr: logic
+    defaults: {}
+
+# --- Container (non risorse, ma raggruppamenti) ---
+containers:
+  resource_group:
+    label_prefix: "RG:"
+    terraform_type: azurerm_resource_group
+    module: resource_group
+  subscription:
+    label_prefix: "SUB:"
+  virtual_network:
+    label_prefix: "VNET:"
+  subnet:
+    label_prefix: "SUBNET:"
+
+# --- Connessioni (frecce) ---
+connections:
+  "":
+    type: depends_on
+    description: Dipendenza generica
+  PE:
+    type: private_endpoint
+    description: Private Endpoint
+  SE:
+    type: service_endpoint
+    description: Service Endpoint
+  DIAG:
+    type: diagnostic_setting
+    description: Diagnostic Settings
+  DATA:
+    type: data_flow
+    description: Flusso dati (ADF)
+  RBAC:
+    type: role_assignment
+    description: Role assignment
+
+# --- Etichette speciali ---
+special_labels:
+  "#skip": ignore_node
+  "#manual": manual_resource
+  "#import": import_resource
+  "#secret": keyvault_secret
+  "#existing": data_source
