@@ -43,7 +43,6 @@ module "storage_account_02" {
   tags                     = local.tags
 }
 
-# --- Data lake: container per le zone medallion (bronze/silver/gold) + landing ---
 module "container_bronze" {
   source               = "../../modules/storage_container"
   name                 = "bronze"
@@ -85,12 +84,19 @@ module "databricks" {
   tags                = local.tags
 }
 
-# RBAC: la Managed Identity del workspace Databricks accede ai dati dello storage
-# (lettura/scrittura blob) senza segreti.
-resource "azurerm_role_assignment" "databricks_storage_blob_contributor" {
-  scope                = module.storage_account.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = module.databricks.principal_id
+module "databricks_cluster" {
+  source                   = "../../modules/databricks_cluster"
+  cluster_name             = "cluster-dev"
+  spark_version            = "13.3.x-scala2.12"
+  node_type_id             = "Standard_DS4_v2"
+  num_workers              = 1
+  autotermination_minutes  = 30
+  data_security_mode       = "SINGLE_USER"
+  tags                     = local.tags
+
+  providers = {
+    databricks = databricks
+  }
 }
 
 module "key_vault" {
@@ -133,39 +139,6 @@ module "sql_database" {
   sku_name  = "S0"
 }
 
-# --- Azure Purview (data governance) ---
-# TEMPORANEAMENTE COMMENTATO: il codice del modulo resta nel repo, ma la risorsa
-# viene rimossa da Azure al prossimo apply (Terraform distrugge cio' che non e'
-# piu' dichiarato). Per riattivare: decommentare il blocco e rilanciare l'apply.
-#
-# module "purview" {
-#   source              = "../../modules/purview"
-#   name                = "pvw-${local.suffix}"
-#   resource_group_name = module.resource_group.name
-#   location            = local.location
-#   tags                = local.tags
-#
-#   role_assignments = {
-#     rg_reader = {
-#       scope = module.resource_group.id
-#       role  = "Reader"
-#     }
-#     storage01_blob_reader = {
-#       scope = module.storage_account.id
-#       role  = "Storage Blob Data Reader"
-#     }
-#     storage02_blob_reader = {
-#       scope = module.storage_account_02.id
-#       role  = "Storage Blob Data Reader"
-#     }
-#     adf_contributor = {
-#       scope = module.data_factory.id
-#       role  = "Data Factory Contributor"
-#     }
-#   }
-# }
-
-# --- Budget + alerting cost ---
 module "budget" {
   source            = "../../modules/budget"
   name              = local.budget_name
@@ -180,10 +153,6 @@ module "budget" {
   ]
 }
 
-# --- Diagnostic settings (modulo riutilizzabile) ---
-# NOTA: diag_storage_blob NON e' gestito da Terraform: il provider azurerm va in
-# timeout su blobServices/default (bug noto). La risorsa puo' essere creata a
-# parte (es. via azapi o manualmente) senza impattare il deploy.
 module "diag_storage_account" {
   source                     = "../../modules/diagnostic_settings"
   name                       = "diag-storage-account"
