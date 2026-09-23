@@ -228,6 +228,41 @@ module "diag_sql_database" {
 }
 
 # =============================================================================
+# ALERT -> AGENTE (webhook)
+# =============================================================================
+# Alert Azure Monitor che, quando scatta, invoca l'agente via webhook HTTPS
+# (Cloudflare Tunnel). L'agente diagnostica e propone la remediation.
+#
+# NOTA: l'URL del webhook e' in Key Vault (secret 'agent-webhook-url').
+# Per il test iniziale usiamo l'URL del quick tunnel Cloudflare.
+
+module "alert_sql_dtu" {
+  source = "../../modules/alert_to_agent"
+
+  name                = "alert-sql-dtu-high"
+  resource_group_name = module.resource_group.name
+  location            = local.location
+
+  action_group_name       = "ag-agent-trigger"
+  action_group_short_name = "ag-agent"
+
+  alert_type         = "metric"
+  target_resource_id = module.sql_database.id
+  metric_namespace   = "Microsoft.Sql/servers/databases"
+  metric_name        = "dtu_consumption_percent"
+  aggregation        = "Average"
+  operator           = "GreaterThan"
+  threshold          = 80
+  severity           = 2
+  frequency          = "PT5M"
+  window_size        = "PT15M"
+
+  agent_webhook_url = var.agent_webhook_url
+
+  tags = local.tags
+}
+
+# =============================================================================
 # MIGRAZIONE container: azurerm_storage_container (data-plane) -> azapi_resource (control-plane)
 # =============================================================================
 # I blocchi 'removed' tolgono i vecchi azurerm dallo state SENZA distruggere la
