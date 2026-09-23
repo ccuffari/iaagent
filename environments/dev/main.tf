@@ -137,6 +137,7 @@ module "sql_database" {
   name      = local.sql_database_name
   server_id = module.sql_server.id
   sku_name  = "S0"
+  tags      = local.tags
 }
 
 module "budget" {

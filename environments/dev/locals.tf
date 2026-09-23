@@ -30,5 +30,7 @@ locals {
   tags = {
     environment = local.environment
     managed_by  = "terraform"
+    owner       = "Cristian Felice Cuffari"
+    project     = "ia_agent"
   }
 }

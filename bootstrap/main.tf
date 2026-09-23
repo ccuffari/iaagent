@@ -12,5 +12,7 @@ locals {
   tags = {
     purpose    = "terraform-state"
     managed_by = "terraform"
+    owner      = "Cristian Felice Cuffari"
+    project    = "ia_agent"
   }
 }
