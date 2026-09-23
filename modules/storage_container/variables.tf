@@ -3,8 +3,8 @@ variable "name" {
   type        = string
 }
 
-variable "storage_account_name" {
-  description = "Nome dello storage account che ospita il container."
+variable "storage_account_id" {
+  description = "Resource ID dello storage account che ospita il container (control-plane ARM)."
   type        = string
 }
 

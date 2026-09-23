@@ -44,27 +44,27 @@ module "storage_account_02" {
 }
 
 module "container_bronze" {
-  source               = "../../modules/storage_container"
-  name                 = "bronze"
-  storage_account_name = module.storage_account.name
+  source             = "../../modules/storage_container"
+  name               = "bronze"
+  storage_account_id = module.storage_account.id
 }
 
 module "container_silver" {
-  source               = "../../modules/storage_container"
-  name                 = "silver"
-  storage_account_name = module.storage_account.name
+  source             = "../../modules/storage_container"
+  name               = "silver"
+  storage_account_id = module.storage_account.id
 }
 
 module "container_gold" {
-  source               = "../../modules/storage_container"
-  name                 = "gold"
-  storage_account_name = module.storage_account.name
+  source             = "../../modules/storage_container"
+  name               = "gold"
+  storage_account_id = module.storage_account.id
 }
 
 module "container_landing" {
-  source               = "../../modules/storage_container"
-  name                 = "landing"
-  storage_account_name = module.storage_account.name
+  source             = "../../modules/storage_container"
+  name               = "landing"
+  storage_account_id = module.storage_account.id
 }
 
 module "data_factory" {

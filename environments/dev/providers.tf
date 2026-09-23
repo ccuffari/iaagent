@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.100"
     }
+    azapi = {
+      source  = "azure/azapi"
+      version = "~> 1.15"
+    }
     databricks = {
       source  = "databricks/databricks"
       version = "~> 1.50"
@@ -14,6 +18,8 @@ terraform {
 provider "azurerm" {
   features {}
 }
+
+provider "azapi" {}
 
 data "azurerm_databricks_workspace" "existing" {
   name                = local.databricks_name
