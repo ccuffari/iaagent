@@ -226,3 +226,58 @@ module "diag_sql_database" {
   ]
   metrics = ["AllMetrics"]
 }
+
+# =============================================================================
+# MIGRAZIONE container: azurerm_storage_container (data-plane) -> azapi_resource (control-plane)
+# =============================================================================
+# I blocchi 'removed' tolgono i vecchi azurerm dallo state SENZA distruggere la
+# risorsa reale. I blocchi 'import' adottano i container esistenti nel nuovo
+# azapi_resource. Cosi' la migrazione e' dichiarativa e senza destroy.
+
+removed {
+  from = module.container_bronze.azurerm_storage_container.this
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.container_silver.azurerm_storage_container.this
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.container_gold.azurerm_storage_container.this
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.container_landing.azurerm_storage_container.this
+  lifecycle {
+    destroy = false
+  }
+}
+
+import {
+  to = module.container_bronze.azapi_resource.this
+  id = "${module.storage_account.id}/blobServices/default/containers/bronze"
+}
+
+import {
+  to = module.container_silver.azapi_resource.this
+  id = "${module.storage_account.id}/blobServices/default/containers/silver"
+}
+
+import {
+  to = module.container_gold.azapi_resource.this
+  id = "${module.storage_account.id}/blobServices/default/containers/gold"
+}
+
+import {
+  to = module.container_landing.azapi_resource.this
+  id = "${module.storage_account.id}/blobServices/default/containers/landing"
+}
