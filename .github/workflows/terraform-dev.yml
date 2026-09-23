@@ -8,6 +8,10 @@ on:
         default: plan
         type: choice
         options: [init, validate, plan, apply, destroy]
+      ref:
+        description: "Branch/ref su cui eseguire (default: branch di default)"
+        required: false
+        type: string
 # Serializza le run dello stesso ambiente: niente collisioni sul lock/lease dello state.
 concurrency:
   group: terraform-dev
@@ -33,6 +37,8 @@ jobs:
       TF_VAR_sql_admin_password: ${{ secrets.TF_VAR_sql_admin_password }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: hashicorp/setup-terraform@v3
       - run: terraform init -input=false
       - run: terraform validate -no-color
