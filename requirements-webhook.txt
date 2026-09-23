@@ -1,0 +1,6 @@
+# Dipendenze per il server webhook dell'agente (Fase 2).
+# Installazione: pip install -r requirements-webhook.txt
+
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
