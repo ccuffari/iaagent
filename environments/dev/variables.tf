@@ -39,3 +39,15 @@ variable "budget_contact_emails" {
   type        = list(string)
   default     = ["cuffaricristianfelice@gmail.com"]
 }
+
+variable "agent_webhook_url" {
+  description = "URL del webhook dell'agente (Cloudflare Tunnel). Vuoto = nessun webhook configurato."
+  type        = string
+  default     = ""
+}
+
+variable "alert_email_receivers" {
+  description = "Destinatari email degli alert (action group)."
+  type        = list(object({ name = string, email = string }))
+  default     = []
+}
