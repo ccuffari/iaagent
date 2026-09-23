@@ -19,6 +19,12 @@ from fastapi import FastAPI, Request, HTTPException, Header
 from fastapi.responses import JSONResponse
 
 
+try:
+    from adf_agent.plugins.monitor__alert_to_agent import run as alert_to_agent_run
+except Exception:  # pragma: no cover - fallback se il plugin non e' importabile
+    alert_to_agent_run = None
+
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("webhook")
 
@@ -53,11 +59,26 @@ def _extract_context(payload: dict) -> dict:
     }
 
 
+def _invoke_agent(payload: dict) -> dict:
+    """Invoca il tool monitor.alert_to_agent per la diagnosi."""
+    if alert_to_agent_run is None:
+        return {"ok": False, "error": "plugin monitor.alert_to_agent non disponibile"}
+    try:
+        return alert_to_agent_run(
+            action="handle",
+            params={"alert_payload": payload, "auto_diagnose": True, "auto_remediate": False},
+        )
+    except Exception as e:
+        logger.exception("Errore nell'invocazione del tool monitor.alert_to_agent")
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/health")
 async def health():
     """Health check per Cloudflare Tunnel e monitoraggio."""
     return {"status": "ok", "service": "adf-agent-webhook",
             "auth_enabled": bool(WEBHOOK_TOKEN),
+            "agent_available": alert_to_agent_run is not None,
             "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
@@ -77,12 +98,14 @@ async def azure_alert(request: Request, authorization: str = Header(None)):
     context = _extract_context(payload)
     logger.info(f"Alert ricevuto: {json.dumps(context, default=str)}")
 
-    # TODO: invocare l'agente (monitor.alert_to_agent) per la diagnosi.
-    # Per ora ritorniamo il contesto estratto (risposta entro il timeout di Azure ~10s).
+    # Invoca il tool monitor.alert_to_agent per la diagnosi.
+    diagnosis = _invoke_agent(payload)
+    logger.info(f"Diagnosi: {json.dumps(diagnosis, default=str)}")
+
     return JSONResponse(status_code=200, content={
         "status": "received",
         "context": context,
-        "note": "diagnosi non ancora implementata (Fase 3)",
+        "diagnosis": diagnosis,
     })
 
 
@@ -105,8 +128,9 @@ async def webhook_test(authorization: str = Header(None)):
         },
     }
     context = _extract_context(fake)
+    diagnosis = _invoke_agent(fake)
     logger.info(f"Test webhook: {json.dumps(context, default=str)}")
-    return {"status": "ok", "context": context}
+    return {"status": "ok", "context": context, "diagnosis": diagnosis}
 
 
 if __name__ == "__main__":
