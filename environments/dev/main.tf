@@ -99,12 +99,6 @@ module "databricks_cluster" {
   }
 }
 
-resource "azurerm_role_assignment" "databricks_storage_blob_contributor" {
-  scope                = module.storage_account.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = module.databricks.principal_id
-}
-
 module "key_vault" {
   source                 = "../../modules/key_vault"
   name                   = local.key_vault_name
