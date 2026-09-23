@@ -228,6 +228,33 @@ module "diag_sql_database" {
 }
 
 # =============================================================================
+# ALERT -> AGENTE (Fase 4)
+# =============================================================================
+# Alert SQL DTU alto: quando scatta, l'Action Group invoca il webhook
+# dell'agente (Cloudflare Tunnel) che diagnostica e propone remediation.
+# L'URL del webhook e' passato via variabile (agent_webhook_url).
+
+module "alert_sql_dtu" {
+  source              = "../../modules/alert_to_agent"
+  name                = "alert-sql-dtu-high"
+  resource_group_name = module.resource_group.name
+  short_name          = "sql-dtu"
+  target_resource_id  = module.sql_database.id
+  metric_namespace    = "Microsoft.Sql/servers/databases"
+  metric_name         = "dtu_consumption_percent"
+  aggregation         = "Average"
+  operator            = "GreaterThan"
+  threshold           = 80
+  severity            = 2
+  frequency           = "PT5M"
+  window_size         = "PT5M"
+  description         = "DTU del database SQL sopra l'80% - invoca l'agente per diagnosi"
+  agent_webhook_url   = var.agent_webhook_url
+  email_receivers     = var.alert_email_receivers
+  tags                = local.tags
+}
+
+# =============================================================================
 # MIGRAZIONE container: azurerm_storage_container (data-plane) -> azapi_resource (control-plane)
 # =============================================================================
 # I blocchi 'removed' tolgono i vecchi azurerm dallo state SENZA distruggere la
