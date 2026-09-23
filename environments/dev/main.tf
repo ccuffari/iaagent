@@ -84,20 +84,25 @@ module "databricks" {
   tags                = local.tags
 }
 
-module "databricks_cluster" {
-  source                   = "../../modules/databricks_cluster"
-  cluster_name             = "cluster-dev"
-  spark_version            = "13.3.x-scala2.12"
-  node_type_id             = "Standard_DS4_v2"
-  num_workers              = 1
-  autotermination_minutes  = 30
-  data_security_mode       = "SINGLE_USER"
-  tags                     = local.tags
-
-  providers = {
-    databricks = databricks
-  }
-}
+# --- Databricks cluster ---
+# TEMPORANEAMENTE COMMENTATO: il cluster non va creato per ora.
+# Al prossimo apply Terraform DISTRUGGE il cluster esistente (cio' che non e'
+# piu' dichiarato viene rimosso). Per riattivare: decommentare il blocco.
+#
+# module "databricks_cluster" {
+#   source                   = "../../modules/databricks_cluster"
+#   cluster_name             = "cluster-dev"
+#   spark_version            = "13.3.x-scala2.12"
+#   node_type_id             = "Standard_DS4_v2"
+#   num_workers              = 1
+#   autotermination_minutes  = 30
+#   data_security_mode       = "SINGLE_USER"
+#   tags                     = local.tags
+#
+#   providers = {
+#     databricks = databricks
+#   }
+# }
 
 module "key_vault" {
   source                 = "../../modules/key_vault"
