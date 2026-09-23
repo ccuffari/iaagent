@@ -232,7 +232,8 @@ module "diag_sql_database" {
 # =============================================================================
 # I blocchi 'removed' tolgono i vecchi azurerm dallo state SENZA distruggere la
 # risorsa reale. I blocchi 'import' adottano i container esistenti nel nuovo
-# azapi_resource. Cosi' la migrazione e' dichiarativa e senza destroy.
+# azapi_resource. L'ID e' costruito STATICAMENTE (subscription/rg/sa noti al plan)
+# per evitare il problema 'known after apply'.
 
 removed {
   from = module.container_bronze.azurerm_storage_container.this
@@ -264,20 +265,20 @@ removed {
 
 import {
   to = module.container_bronze.azapi_resource.this
-  id = "${module.storage_account.id}/blobServices/default/containers/bronze"
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${local.storage_account_name}/blobServices/default/containers/bronze"
 }
 
 import {
   to = module.container_silver.azapi_resource.this
-  id = "${module.storage_account.id}/blobServices/default/containers/silver"
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${local.storage_account_name}/blobServices/default/containers/silver"
 }
 
 import {
   to = module.container_gold.azapi_resource.this
-  id = "${module.storage_account.id}/blobServices/default/containers/gold"
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${local.storage_account_name}/blobServices/default/containers/gold"
 }
 
 import {
   to = module.container_landing.azapi_resource.this
-  id = "${module.storage_account.id}/blobServices/default/containers/landing"
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${local.storage_account_name}/blobServices/default/containers/landing"
 }
