@@ -1,7 +1,7 @@
 output "id" {
-  value = azurerm_storage_container.this.id
+  value = azapi_resource.this.id
 }
 
 output "name" {
-  value = azurerm_storage_container.this.name
+  value = azapi_resource.this.name
 }
