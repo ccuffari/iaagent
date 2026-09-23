@@ -4,8 +4,4 @@ resource "azurerm_databricks_workspace" "this" {
   location            = var.location
   sku                 = var.sku
   tags                = var.tags
-
-  identity {
-    type = "SystemAssigned"
-  }
 }
