@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    azapi = {
+      source  = "azure/azapi"
+      version = "~> 1.15"
+    }
+  }
+}
+
 # Container gestito via CONTROL-PLANE ARM (azapi) invece del data-plane (azurerm).
 # Motivo: lo storage account ha network_rules.default_action = "Deny" con firewall;
 # il data-plane (azurerm_storage_container) viene bloccato con 403 AuthorizationFailure
