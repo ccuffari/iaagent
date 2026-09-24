@@ -84,26 +84,6 @@ module "databricks" {
   tags                = local.tags
 }
 
-# --- Databricks cluster ---
-# TEMPORANEAMENTE COMMENTATO: il cluster non va creato per ora.
-# Al prossimo apply Terraform DISTRUGGE il cluster esistente (cio' che non e'
-# piu' dichiarato viene rimosso). Per riattivare: decommentare il blocco.
-#
-# module "databricks_cluster" {
-#   source                   = "../../modules/databricks_cluster"
-#   cluster_name             = "cluster-dev"
-#   spark_version            = "13.3.x-scala2.12"
-#   node_type_id             = "Standard_DS4_v2"
-#   num_workers              = 1
-#   autotermination_minutes  = 30
-#   data_security_mode       = "SINGLE_USER"
-#   tags                     = local.tags
-#
-#   providers = {
-#     databricks = databricks
-#   }
-# }
-
 module "key_vault" {
   source                 = "../../modules/key_vault"
   name                   = local.key_vault_name
@@ -143,6 +123,24 @@ module "sql_database" {
   server_id = module.sql_server.id
   sku_name  = "S0"
   tags      = local.tags
+}
+
+# --- Azure Synapse Analytics ---
+# Workspace Synapse con data lake ADLS Gen2 dedicato e Managed VNet.
+module "synapse" {
+  source                           = "../../modules/synapse"
+  name                             = local.synapse_name
+  resource_group_name              = module.resource_group.name
+  location                         = local.location
+  datalake_storage_account_name    = local.synapse_datalake_name
+  datalake_filesystem_name         = "synapse"
+  sql_administrator_login          = var.sql_admin_login
+  sql_administrator_login_password = var.sql_admin_password
+  managed_virtual_network_enabled  = true
+  network_default_action           = "Deny"
+  allowed_subnet_ids               = [module.virtual_network.subnet_id]
+  allowed_ip_addresses             = var.allowed_ip_addresses
+  tags                             = local.tags
 }
 
 module "budget" {
@@ -227,12 +225,13 @@ module "diag_sql_database" {
   metrics = ["AllMetrics"]
 }
 
-# =============================================================================
-# ALERT -> AGENTE (Fase 4)
-# =============================================================================
-# Alert SQL DTU alto: quando scatta, l'Action Group invoca il webhook
-# dell'agente (Cloudflare Tunnel) che diagnostica e propone remediation.
-# L'URL del webhook e' passato via variabile (agent_webhook_url).
+module "diag_synapse" {
+  source                     = "../../modules/diagnostic_settings"
+  name                       = "diag-synapse"
+  target_resource_id         = module.synapse.id
+  log_analytics_workspace_id = module.log_analytics.id
+  metrics                    = ["AllMetrics"]
+}
 
 module "alert_sql_dtu" {
   source              = "../../modules/alert_to_agent"
@@ -253,13 +252,6 @@ module "alert_sql_dtu" {
   email_receivers     = var.alert_email_receivers
   tags                = local.tags
 }
-
-# =============================================================================
-# MIGRAZIONE container: azurerm_storage_container (data-plane) -> azapi_resource (control-plane)
-# =============================================================================
-# I blocchi 'removed' tolgono i vecchi azurerm dallo state SENZA distruggere la
-# risorsa reale. NON usiamo 'import' blocks: azapi fa PUT idempotente, quindi al
-# primo apply adotta i container esistenti (o li crea se mancanti).
 
 removed {
   from = module.container_bronze.azurerm_storage_container.this

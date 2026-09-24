@@ -25,6 +25,10 @@ locals {
   budget_name             = "budget-${local.suffix}"
   # Azure Databricks: abbreviazione Azure 'dbw'.
   databricks_name         = "dbw-${local.suffix}"
+  # Azure Synapse: abbreviazione Azure 'syn'.
+  synapse_name            = "syn-${local.suffix}"
+  # Storage ADLS Gen2 per Synapse (senza trattini).
+  synapse_datalake_name   = "sa${local.workload}${local.environment}${local.region}syn"
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   tags = {
